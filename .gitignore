@@ -2,7 +2,9 @@
 .vscode
 .DS_Store
 data/*
+figs/*
 
+notebooks/wav2vec2-large-xlsr-53-spanish
 
 __pycache__
 *.pyc
