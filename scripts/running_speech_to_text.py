@@ -16,7 +16,9 @@ import subprocess, os
 from asrecognition import ASREngine
 
 all_original_files = glob('../data/audiofiles/*.wav')
-asr = ASREngine("es", model_path='jonatasgrosman/wav2vec2-large-xlsr-53-spanish')
+asr = ASREngine("es", model_path='jonatasgrosman/wav2vec2-large-xlsr-53-spanish', device='cuda', number_of_workers=3)
+
+all_original_files = [f for f in all_original_files if not os.path.exists(f.replace('.wav', '.txt').replace('audiofiles', 'transcripts'))]
 
 for file in tqdm(all_original_files):
 
