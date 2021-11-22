@@ -16,17 +16,17 @@ import subprocess, os
 from asrecognition import ASREngine
 
 all_original_files = glob('../data/audiofiles/*.wav')
-asr = ASREngine("es", model_path='jonatasgrosman/wav2vec2-large-xlsr-53-spanish', device='cuda', number_of_workers=3)
+asr = ASREngine("es", model_path='jonatasgrosman/wav2vec2-large-xlsr-53-spanish', device='cuda')
 
 all_original_files = [f for f in all_original_files if not os.path.exists(f.replace('.wav', '.txt').replace('audiofiles', 'transcripts'))]
 
-for file in tqdm(all_original_files):
+for file in tqdm(all_original_files): 
 
     subprocess.run(['ffmpeg', '-i', file, '-f', 'segment', '-segment_time', '119', '-c', 'copy', '../data/audiofiles/temp/split%03d.wav', '-loglevel','quiet'],  stdout=subprocess.DEVNULL)
 
     # Run speech recognition
     audio_paths = glob("../data/audiofiles/temp/*.wav")
-    transcriptions = asr.transcribe(audio_paths)
+    transcriptions = [asr.transcribe(audio_path)[0] for audio_path in audio_paths] # Avoids multithreading to use cuda properly
 
     # Save transcriptions
     tmap = {int(t['path'][-7:-4]): t['transcription'] for t in transcriptions}
