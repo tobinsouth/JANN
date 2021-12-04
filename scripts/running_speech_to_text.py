@@ -8,25 +8,31 @@
 #     subprocess.run(['rm', '-rf', file],  stdout=subprocess.DEVNULL)
 
 
-
-
 from glob import glob
 from tqdm import tqdm
 import subprocess, os
 from asrecognition import ASREngine
 
 all_original_files = glob('../data/audiofiles/*.wav')
-asr = ASREngine("es", model_path='jonatasgrosman/wav2vec2-large-xlsr-53-spanish', device='cuda')
+asr = ASREngine("es", model_path='facebook/wav2vec2-large-xlsr-53-spanish', device = 'cuda')
 
-# all_original_files = [f for f in all_original_files if not os.path.exists(f.replace('.wav', '.txt').replace('audiofiles', 'transcripts'))]
+all_original_files = [f for f in all_original_files if not os.path.exists(f.replace('.wav', '.txt').replace('audiofiles', 'transcripts'))]
 
 for file in tqdm(all_original_files): 
-
     subprocess.run(['ffmpeg', '-i', file, '-f', 'segment', '-segment_time', '119', '-c', 'copy', '../data/audiofiles/temp/split%03d.wav', '-loglevel','quiet'],  stdout=subprocess.DEVNULL)
 
     # Run speech recognition
     audio_paths = glob("../data/audiofiles/temp/*.wav")
-    transcriptions = [asr.transcribe([audio_path])[0] for audio_path in tqdm(audio_paths)] # Avoids multithreading to use cuda properly
+    audio_paths = sorted(audio_paths)
+    transcriptions = []
+    for audio_path in audio_paths:
+        try:
+            transcription = asr.transcribe([audio_path])[0]
+        except RuntimeError:
+            print('Failed on file:', audio_path)
+            transcription = {'path': audio_path, 'transcription': ''}
+
+        transcriptions.append(transcription)
 
     # Save transcriptions
     tmap = {int(t['path'][-7:-4]): t['transcription'] for t in transcriptions}
