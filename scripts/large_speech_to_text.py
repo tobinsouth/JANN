@@ -10,14 +10,14 @@ def map_to_array(batch):
     batch["speech"] = speech
     return batch
 
-batch = {'file':'../data/audiofiles/temp/split025.wav'}
+batch = {'file':'../data/fullmovieaudio.wav'}
 array = map_to_array(batch)["speech"]
 array = array.sum(axis=1)/2
 
 model = Speech2TextForConditionalGeneration.from_pretrained("facebook/s2t-medium-mustc-multilingual-st")
 processor = Speech2TextProcessor.from_pretrained("facebook/s2t-medium-mustc-multilingual-st")
 
-inputs = processor(speech, sampling_rate=16_000, return_tensors="pt")
+inputs = processor(array, sampling_rate=16_000, return_tensors="pt")
 
 generated_ids = model.generate(
     input_ids=inputs["input_features"],
@@ -48,8 +48,6 @@ with torch.no_grad():
 
 predicted_ids = torch.argmax(logits, dim=-1)
 predicted_sentences = processor.batch_decode(predicted_ids)
-
-
 
 
 
@@ -123,3 +121,35 @@ print(translation_es, translation_en, predicted_sentences, translation_asr, torc
 
 # predicted_ids = torch.argmax(logits, dim=-1)
 # predicted_sentences = processor.batch_decode(predicted_ids)
+
+
+
+
+
+
+# New module
+# pip install SpeechRecognition
+import speech_recognition as sr
+
+
+r = sr.Recognizer()
+with sr.AudioFile('../data/output.wav') as source:
+    audio = r.record(source)  # read the entire audio file
+
+r.recognize_sphinx(audio, language='es-ES', show_all=True)
+
+
+from pocketsphinx.pocketsphinx import *
+from sphinxbase.sphinxbase import *
+
+# Here is the configuration for Spanish
+config = Decoder.default_config()
+config.set_string('-hmm', 'cmusphinx-es-5.2/model_parameters/voxforge_es_sphinx.cd_ptm_4000')
+config.set_string('-lm', 'es-20k.lm.gz')
+config.set_string('-dict', 'es.dict')
+decoder = Decoder(config)
+
+
+decoder = Decoder(config)
+decoder.start_utt()
+stream = open('hola.wav', 'rb')
